@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -9,7 +9,6 @@ from models import db, User, Review, Game
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.json.compact = False
 
 migrate = Migrate(app, db)
 
@@ -21,7 +20,6 @@ def index():
 
 @app.route('/games')
 def games():
-
     games = []
     for game in Game.query.all():
         game_dict = {
@@ -31,56 +29,45 @@ def games():
             "price": game.price,
         }
         games.append(game_dict)
-
-    response = make_response(
-        games,
-        200
-    )
-
-    return response
+    return jsonify(games), 200
 
 @app.route('/games/<int:id>')
 def game_by_id(id):
     game = Game.query.filter(Game.id == id).first()
-    
-    game_dict = game.to_dict()
-
-    response = make_response(
-        game_dict,
-        200
-    )
-
-    return response
+    if game:
+        game_dict = {
+            "title": game.title,
+            "genre": game.genre,
+            "platform": game.platform,
+            "price": game.price,
+        }
+        return jsonify(game_dict), 200
+    else:
+        return "Game not found", 404
 
 @app.route('/reviews')
 def reviews():
-
     reviews = []
     for review in Review.query.all():
-        review_dict = review.to_dict()
+        review_dict = {
+            "score": review.score,
+            "comment": review.comment,
+            "game_id": review.game_id,
+            "user_id": review.user_id,
+        }
         reviews.append(review_dict)
-
-    response = make_response(
-        reviews,
-        200
-    )
-
-    return response
+    return jsonify(reviews), 200
 
 @app.route('/users')
 def users():
-
     users = []
     for user in User.query.all():
-        user_dict = user.to_dict()
+        user_dict = {
+            "name": user.name,
+            "user_id": user.id,
+        }
         users.append(user_dict)
-
-    response = make_response(
-        users,
-        200
-    )
-
-    return response
+    return jsonify(users), 200
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
